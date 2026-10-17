@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pasangkan Kartu Nusantara ✨</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1d4d3a, #123127);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+            touch-action: manipulation;
+            position: relative;
+        }
+
+        /* Partikel latar */
+        .bg-particle {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 215, 0, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: floatBg 8s infinite ease-in-out;
+        }
+
+        @keyframes floatBg {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(15px, -20px); }
+            50% { transform: translate(25px, 10px); }
+            75% { transform: translate(-10px, 15px); }
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 500px;
+            background: #f8e9d0;
+            /* compatibility: background-clip */
+            -webkit-background-clip: padding-box;
+            background-clip: padding-box;
+            border-radius: 60px 60px 30px 30px;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.7), 0 0 0 4px #ca9e6e inset;
+            overflow: hidden;
+            padding: 20px 16px 24px;
+            position: relative;
+            z-index: 10;
+            backdrop-filter: blur(2px);
+            border: 2px solid #ffd966;
+        }
+
+        /* Header dengan animasi */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #b5825a;
+            padding: 10px 16px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 5px 0 #7b5639, 0 0 15px #ffbf00;
+            border: 2px solid #fff2b5;
+            animation: headerGlow 2s infinite;
+        }
+
+        @keyframes headerGlow {
+            0%, 100% { box-shadow: 0 5px 0 #7b5639, 0 0 15px #ffbf00; }
+            50% { box-shadow: 0 5px 0 #7b5639, 0 0 25px #ffaa00; }
+        }
+
+        .score-box {
+            background: #2f4d2f;
+            padding: 6px 16px;
+            border-radius: 40px;
+            border: 2px solid #ffd966;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 20px;
+            box-shadow: inset 0 -2px 0 #1d2e1d;
+            transition: 0.2s;
+        }
+        .score-box span { font-size: 26px; color: #ffd966; }
+
+        .moves {
+            background: #5a3e2b;
+            padding: 6px 20px;
+            border-radius: 40px;
+            border: 2px solid #ffd966;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: inset 0 -2px 0 #3b2a1c;
+        }
+
+        /* Tombol mute */
+        .mute-btn {
+            background: #2b3a2b;
+            border: 2px solid #ffd966;
+            border-radius: 40px;
+            padding: 6px 12px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #1d2a1d;
+            transition: 0.1s;
+        }
+        .mute-btn:active { transform: translateY(3px); box-shadow: none; }
+
+        /* Grid kartu */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+            perspective: 800px;
+        }
+
+        .card {
+            aspect-ratio: 1 / 1;
+            background: #d9b382;
+            border-radius: 20px;
+            box-shadow: 0 10px 0 #8b5a2b, 0 5px 15px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 44px;
+            cursor: pointer;
+            border: 3px solid #ffd966;
+            color: #3f2a14;
+            transition: transform 0.2s cubic-bezier(0.2, 1.2, 0.5, 1), box-shadow 0.2s, background 0.2s;
+            transform-style: preserve-3d;
+            position: relative;
+            animation: cardAppear 0.3s ease-out;
+        }
+
+        @keyframes cardAppear {
+            0% { transform: scale(0) rotate(-5deg); opacity: 0; }
+            80% { transform: scale(1.05) rotate(2deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+
+        .card.flipped {
+            background: #fef7e0;
+            box-shadow: 0 4px 0 #b58b5b, 0 10px 20px rgba(255,215,0,0.5);
+            transform: translateY(-4px) scale(1.02);
+            border-color: #ffffff;
+        }
+
+        .card.matched {
+            background: #b3d9b3;
+            box-shadow: 0 4px 0 #4c7a4c, 0 0 25px #4caf50;
+            border-color: #4caf50;
+            cursor: default;
+            transform: scale(0.98) translateY(4px);
+            animation: matchedPulse 0.6s;
+        }
+
+        @keyframes matchedPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 #4caf50; }
+            50% { transform: scale(1.1); box-shadow: 0 0 25px 10px #4caf50; }
+            100% { transform: scale(0.98); box-shadow: 0 4px 0 #4c7a4c; }
+        }
+
+        .card:active:not(.flipped):not(.matched) {
+            transform: translateY(4px) scale(0.98);
+            box-shadow: 0 4px 0 #8b5a2b;
+        }
+
+        /* Animasi salah */
+        .card.wrong {
+            animation: wrongShake 0.3s;
+            background: #ffb3b3;
+        }
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        /* Footer */
+        .footer {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        button {
+            flex: 1;
+            background: #b5825a;
+            border: none;
+            border-radius: 60px;
+            padding: 16px 0;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            border: 3px solid #ffd966;
+            box-shadow: 0 7px 0 #7b5639;
+            cursor: pointer;
+            transition: 0.07s linear;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        button:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 #7b5639;
+        }
+
+        /* Modal menang */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-card {
+            background: #f8e9d0;
+            border: 5px solid #ffd966;
+            border-radius: 70px;
+            padding: 30px 20px;
+            text-align: center;
+            width: 80%;
+            max-width: 340px;
+            box-shadow: 0 20px 40px #000000b3, 0 0 50px #ffaa00;
+            animation: modalPop 0.4s;
+        }
+        @keyframes modalPop {
+            0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+            80% { transform: scale(1.05) rotate(2deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+        .modal-card h2 { font-size: 60px; margin-bottom: 10px; animation: bounce 1s infinite; }
+        @keyframes bounce {
+            0%,100%{ transform: translateY(0); }
+            50%{ transform: translateY(-10px); }
+        }
+        .modal-card p { font-size: 22px; margin: 12px 0; }
+        .modal-card .highscore {
+            background: #5a3e2b;
+            padding: 10px 20px;
+            border-radius: 60px;
+            color: #ffd966;
+            font-weight: bold;
+            font-size: 22px;
+            border: 2px solid #ffd966;
+            margin: 15px 0;
+        }
+        .modal-card button {
+            margin-top: 10px;
+            width: 100%;
+            font-size: 26px;
+        }
+
+        /* Partikel confetti (dibuat lewat JS) */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 15px;
+            background: #ff0;
+            top: -20px;
+            border-radius: 3px;
+            box-shadow: 0 0 5px #fff;
+            animation: confettiFall 3s linear forwards;
+            z-index: 2000;
+            pointer-events: none;
+        }
+        @keyframes confettiFall {
+            to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Partikel latar -->
+    <div id="bgParticles"></div>
+
+    <div class="game-container">
+        <div class="header">
+            <div class="score-box">
+                <span>⏳</span>
+                <span id="timerDisplay">00:00</span>
+            </div>
+            <div class="moves">
+                <span>🌀</span>
+                <span id="movesDisplay">0</span>
+            </div>
+            <div class="mute-btn" id="muteBtn">🔊</div>
+        </div>
+
+        <div class="grid" id="gridContainer"></div>
+
+        <div class="footer">
+            <button id="resetBtn"><span>🔄</span> Ulang</button>
+            <button id="newGameBtn"><span>✨</span> Baru</button>
+        </div>
+
+        <!-- Modal menang -->
+        <div class="modal" id="winModal">
+            <div class="modal-card">
+                <h2>🏆</h2>
+                <p id="winMessage"></p>
+                <div class="highscore" id="highScoreDisplay"></div>
+                <button id="playAgainBtn">🎉 Main Lagi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ==================== AUDIO ====================
+            let audioCtx = null;
+            let isMuted = false;
+            let musicGain = null;
+            let musicInterval = null;
+
+            // tangga nada pelog sederhana (frekuensi)
+            const pelog = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 523.25];
+
+            function initAudio() {
+                if (audioCtx) return;
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    musicGain = audioCtx.createGain();
+                    musicGain.gain.value = 0.1; // volume latar
+                    musicGain.connect(audioCtx.destination);
+
+                    // loop musik latar (gamelan sederhana)
+                    let noteIndex = 0;
+                    musicInterval = setInterval(() => {
+                        if (!audioCtx || isMuted || audioCtx.state === 'suspended') return;
+                        let now = audioCtx.currentTime;
+                        let osc = audioCtx.createOscillator();
+                        osc.type = 'sine';
+                        osc.frequency.value = pelog[noteIndex % pelog.length];
+                        let gainNode = audioCtx.createGain();
+                        gainNode.gain.setValueAtTime(0.04, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                        osc.connect(gainNode);
+                        gainNode.connect(musicGain);
+                        osc.start(now);
+                        osc.stop(now + 0.6);
+                        noteIndex++;
+                    }, 800);
+                } catch (e) { console.warn("Audio tidak didukung"); }
+            }
+
+            function playSound(type) {
+                if (!audioCtx || isMuted || audioCtx.state === 'suspended') return;
+                let now = audioCtx.currentTime;
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'sine';
+                if (type === 'flip') {
+                    osc.frequency.value = 523.25;
+                    gain.gain.setValueAtTime(0.03, now);
+                } else if (type === 'match') {
+                    osc.frequency.value = 659.25;
+                    gain.gain.setValueAtTime(0.06, now);
+                } else if (type === 'win') {
+                    osc.frequency.value = 784.00;
+                    gain.gain.setValueAtTime(0.1, now);
+                } else if (type === 'wrong') {
+                    osc.frequency.value = 220.00;
+                    gain.gain.setValueAtTime(0.05, now);
+                }
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                osc.connect(gain);
+                gain.connect(musicGain);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            }
+
+            // Mute toggle
+            document.getElementById('muteBtn').addEventListener('click', () => {
+                isMuted = !isMuted;
+                document.getElementById('muteBtn').innerText = isMuted ? '🔇' : '🔊';
+                if (musicGain) musicGain.gain.value = isMuted ? 0 : 0.1;
+            });
+
+            // ==================== GAME ====================
+            const icons = ['🏯','🌋','🥘','🦅','🎭','🌊','🥥','🦧']; // 8 pasang
+            let cards = [];
+            let flippedIndices = [];
+            let matchedCount = 0;
+            let moves = 0;
+            let seconds = 0;
+            let timerInterval = null;
+            let gameActive = true;
+            let canFlip = true;
+            let highScore = localStorage.getItem('memoryHighScore') ? parseInt(localStorage.getItem('memoryHighScore')) : null;
+
+            // Elemen
+            const gridEl = document.getElementById('gridContainer');
+            const timerDisplay = document.getElementById('timerDisplay');
+            const movesDisplay = document.getElementById('movesDisplay');
+            const winModal = document.getElementById('winModal');
+            const winMessage = document.getElementById('winMessage');
+            const highScoreDisplay = document.getElementById('highScoreDisplay');
+            const resetBtn = document.getElementById('resetBtn');
+            const newGameBtn = document.getElementById('newGameBtn');
+            const playAgainBtn = document.getElementById('playAgainBtn');
+
+            // Fungsi
+            function shuffle(a) {
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
+            }
+
+            function initGame() {
+                let deck = [];
+                icons.forEach((icon, idx) => {
+                    deck.push({ id: idx, icon: icon, matched: false });
+                    deck.push({ id: idx, icon: icon, matched: false });
+                });
+                cards = shuffle(deck);
+                flippedIndices = [];
+                matchedCount = 0;
+                moves = 0;
+                seconds = 0;
+                gameActive = true;
+                canFlip = true;
+                updateMoves();
+                updateTimerDisplay();
+                renderGrid();
+
+                // Audio start
+                initAudio();
+                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    if (gameActive && matchedCount < 16) {
+                        seconds++;
+                        updateTimerDisplay();
+                    }
+                }, 1000);
+            }
+
+            function renderGrid() {
+                let html = '';
+                cards.forEach((card, idx) => {
+                    let classes = 'card';
+                    if (card.matched) classes += ' matched';
+                    else if (flippedIndices.includes(idx)) classes += ' flipped';
+                    html += `<div class="${classes}" data-index="${idx}">${card.matched || flippedIndices.includes(idx) ? card.icon : ''}</div>`;
+                });
+                gridEl.innerHTML = html;
+                document.querySelectorAll('.card').forEach(c => c.addEventListener('click', cardClick));
+            }
+
+            function cardClick(e) {
+                const div = e.currentTarget;
+                const index = parseInt(div.dataset.index, 10);
+                if (!gameActive || !canFlip) return;
+                if (cards[index].matched) return;
+                if (flippedIndices.includes(index)) return;
+                if (flippedIndices.length === 2) return;
+
+                // flip
+                flippedIndices.push(index);
+                moves++;
+                updateMoves();
+                playSound('flip');
+                renderGrid();
+
+                if (flippedIndices.length === 2) {
+                    canFlip = false;
+                    const idx1 = flippedIndices[0];
+                    const idx2 = flippedIndices[1];
+                    const card1 = cards[idx1];
+                    const card2 = cards[idx2];
+
+                    if (card1.id === card2.id) {
+                        // match
+                        playSound('match');
+                        setTimeout(() => {
+                            card1.matched = true;
+                            card2.matched = true;
+                            matchedCount += 2;
+                            flippedIndices = [];
+                            canFlip = true;
+                            renderGrid();
+
+                            // efek partikel match
+                            for (let i=0;i<6;i++) {
+                                setTimeout(() => createParticle('match'), i*50);
+                            }
+
+                            if (matchedCount === 16) {
+                                gameActive = false;
+                                clearInterval(timerInterval);
+                                playSound('win');
+                                showWin();
+                                createConfetti();
+                            }
+                        }, 400);
+                    } else {
+                        // wrong
+                        playSound('wrong');
+                        // tambah kelas wrong untuk animasi
+                        document.querySelectorAll(`.card[data-index="${idx1}"], .card[data-index="${idx2}"]`).forEach(el => {
+                            el.classList.add('wrong');
+                        });
+                        setTimeout(() => {
+                            flippedIndices = [];
+                            canFlip = true;
+                            renderGrid();
+                        }, 600);
+                    }
+                }
+            }
+
+            function updateMoves() {
+                movesDisplay.textContent = moves;
+            }
+
+            function updateTimerDisplay() {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                timerDisplay.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            }
+
+            function showWin() {
+                winMessage.innerHTML = `Kamu menang dalam ${moves} langkah<br>waktu ${timerDisplay.textContent}`;
+                if (highScore === null || moves < highScore) {
+                    highScore = moves;
+                    localStorage.setItem('memoryHighScore', highScore);
+                    highScoreDisplay.innerHTML = `🏆 High Score Baru : ${highScore} langkah ✨`;
+                } else {
+                    highScoreDisplay.innerHTML = `🏆 High Score : ${highScore} langkah`;
+                }
+                winModal.style.display = 'flex';
+            }
+
+            // Partikel kecil
+            function createParticle(type) {
+                const p = document.createElement('div');
+                p.className = 'confetti';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.background = type === 'match' ? '#ffd700' : '#ffaa00';
+                p.style.width = '8px';
+                p.style.height = '12px';
+                p.style.animationDuration = 1 + Math.random() + 's';
+                document.body.appendChild(p);
+                setTimeout(() => p.remove(), 3000);
+            }
+
+            // Confetti banyak saat menang
+            function createConfetti() {
+                for (let i = 0; i < 60; i++) {
+                    setTimeout(() => {
+                        const c = document.createElement('div');
+                        c.className = 'confetti';
+                        c.style.left = Math.random() * 100 + '%';
+                        c.style.background = `hsl(${Math.random() * 360}, 100%, 60%)`;
+                        c.style.width = Math.random() * 12 + 5 + 'px';
+                        c.style.height = Math.random() * 15 + 8 + 'px';
+                        c.style.animationDuration = 2 + Math.random() * 2 + 's';
+                        document.body.appendChild(c);
+                        setTimeout(() => c.remove(), 4000);
+                    }, i * 30);
+                }
+            }
+
+            // Partikel latar
+            function createBgParticles() {
+                const bg = document.getElementById('bgParticles');
+                for (let i=0;i<20;i++) {
+                    let p = document.createElement('div');
+                    p.className = 'bg-particle';
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.top = Math.random() * 100 + '%';
+                    p.style.animationDelay = Math.random() * 5 + 's';
+                    p.style.background = `rgba(255, ${150+Math.random()*100}, 0, 0.3)`;
+                    bg.appendChild(p);
+                }
+            }
+
+            // Reset
+            function resetGame() {
+                winModal.style.display = 'none';
+                initGame();
+            }
+
+            // Event listeners
+            resetBtn.addEventListener('click', resetGame);
+            newGameBtn.addEventListener('click', resetGame);
+            playAgainBtn.addEventListener('click', resetGame);
+
+            // Mulai
+            createBgParticles();
+            initGame();
+        })();
+    </script>
+</body>
+</html>
